@@ -1,24 +1,24 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-    "path/filepath"
-    "encoding/json"
+	"path/filepath"
 
 	"github.com/kazuminn/dfchange/hash"
 )
 
 type config struct {
 	Path string `json:"path"`
-	Hash []byte         `json:"hash"`
+	Hash []byte `json:"hash"`
 }
 
 func main() {
 
-    root := "/home/kazumi/go/src/github.com/kazuminn/dfchange"
-    configs := []config{}
+	root := "/home/kazumi/go/src/github.com/kazuminn/dfchange"
+	configs := []config{}
 
 	err := filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
@@ -38,7 +38,7 @@ func main() {
 
 			sha1 := hash.Hash_sha1{}
 			bs := sha1.GetHash(string(b))
-			configs = append(configs, config{ path, bs, })
+			configs = append(configs, config{path, bs})
 			f.Close()
 
 			return nil
@@ -46,8 +46,8 @@ func main() {
 
 	if err != nil {
 		fmt.Println(1, err)
-    }
-    
-    s, _ := json.Marshal(configs)
-			fmt.Println(string(s))
+	}
+
+	s, _ := json.Marshal(configs)
+	fmt.Println(string(s))
 }
