@@ -16,14 +16,9 @@ type config struct {
 }
 
 var configs = []config{}
+var root = "/home/kazumi/go/src/github.com/kazuminn/dfchange"
 
 func scan(path string, info os.FileInfo, err error) error {
-	if info.IsDir() {
-		// 特定のディレクトリ以下を無視する場合は
-		// return filepath.SkipDir
-		return nil
-	}
-
 	f, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
@@ -40,16 +35,75 @@ func scan(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
+func exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
 func main() {
 
-	root := "/home/kazumi/go/src/github.com/kazuminn/dfchange"
+	ok := exists("./result.json")
+	if ok {
+        //current
+		err := filepath.Walk(root, scan)
+		if err != nil {
+			fmt.Println(err)
+        }
+		currentConfig := configs
+        currentMap := map[string]string{}
+        for _, r := range currentConfig {
+            currentMap[r.Path] = string(r.Hash)
+		}
 
-	err := filepath.Walk(root, scan)
+        //previous
+		b, err := ioutil.ReadFile("./result.json")
+		if err != nil {
+			fmt.Println(os.Stderr, err)
+			os.Exit(1)
+        }
+        var prevConfig []config
+        err = json.Unmarshal(b, &prevConfig)
+		if err != nil {
+			fmt.Println(os.Stderr, err)
+			os.Exit(1)
+        }
+        prevMap := map[string]string{}
+        for _, r := range prevConfig {
+            prevMap[r.Path] = string(r.Hash)
+		}
 
-	if err != nil {
-		fmt.Println(err)
+        //detect
+        for path, hash := range prevMap {
+            _, ok := currentMap[path]
+            if(currentMap[path] != hash) {
+			    fmt.Println(path)
+            }else if(!ok){
+			    fmt.Println(path)
+            }
+        }
+
+        //write
+		s, _ := json.Marshal(currentConfig)
+		err = ioutil.WriteFile("./result.json", s, 0666)
+		if err != nil {
+			fmt.Println(os.Stderr, err)
+			os.Exit(1)
+        }
+
+	} else {
+
+		err := filepath.Walk(root, scan)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		s, _ := json.Marshal(configs)
+
+		err = ioutil.WriteFile("./result.json", s, 0666)
+		if err != nil {
+			fmt.Println(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
-
-	s, _ := json.Marshal(configs)
-	fmt.Println(string(s))
 }
