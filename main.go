@@ -73,11 +73,13 @@ func main() {
 		}
 
         //detect
-        for path, hash := range prevMap {
-            _, ok := currentMap[path]
-            if(currentMap[path] != hash) {
-			    fmt.Println(path)
-            }else if(!ok){
+        for path, hash := range currentMap {
+            value, ok := prevMap[path]
+            if(ok) {
+                if(value != hash){
+			        fmt.Println(path)
+                }
+            }else{
 			    fmt.Println(path)
             }
         }
