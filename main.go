@@ -15,8 +15,10 @@ type config struct {
 	Hash []byte `json:"hash"`
 }
 
+var currentConfig []config
 var configs = []config{}
-var root = "/home/kazumi/go/src/github.com/kazuminn/dfchange"
+var prevMap = map[string]string{}
+var root = "/etc"
 
 func scan(path string, info os.FileInfo, err error) error {
 	f, err := os.Open(path)
@@ -35,6 +37,31 @@ func scan(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
+func detect(path string, info os.FileInfo, err error) error {
+	f, err := os.Open(path)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// 一気に全部読み取り
+	b, err := ioutil.ReadAll(f)
+
+	sha1 := hash.Hash_sha1{}
+	bs := sha1.GetHash(string(b))
+	value, ok := prevMap[path]
+	if ok {
+		if value != string(bs) {
+			fmt.Println(path)
+		}
+	} else {
+		fmt.Println(path)
+	}
+	currentConfig = append(currentConfig, config{path, bs})
+	f.Close()
+
+	return nil
+}
+
 func exists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
@@ -44,53 +71,35 @@ func main() {
 
 	ok := exists("./result.json")
 	if ok {
-        //current
-		err := filepath.Walk(root, scan)
-		if err != nil {
-			fmt.Println(err)
-        }
-		currentConfig := configs
-        currentMap := map[string]string{}
-        for _, r := range currentConfig {
-            currentMap[r.Path] = string(r.Hash)
-		}
-
-        //previous
+		//previous
 		b, err := ioutil.ReadFile("./result.json")
 		if err != nil {
 			fmt.Println(os.Stderr, err)
 			os.Exit(1)
-        }
-        var prevConfig []config
-        err = json.Unmarshal(b, &prevConfig)
+		}
+		var prevConfig []config
+		err = json.Unmarshal(b, &prevConfig)
 		if err != nil {
 			fmt.Println(os.Stderr, err)
 			os.Exit(1)
-        }
-        prevMap := map[string]string{}
-        for _, r := range prevConfig {
-            prevMap[r.Path] = string(r.Hash)
+		}
+		for _, r := range prevConfig {
+			prevMap[r.Path] = string(r.Hash)
 		}
 
-        //detect
-        for path, hash := range currentMap {
-            value, ok := prevMap[path]
-            if(ok) {
-                if(value != hash){
-			        fmt.Println(path)
-                }
-            }else{
-			    fmt.Println(path)
-            }
-        }
+		//current
+		err = filepath.Walk(root, detect)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-        //write
+		//write
 		s, _ := json.Marshal(currentConfig)
 		err = ioutil.WriteFile("./result.json", s, 0666)
 		if err != nil {
 			fmt.Println(os.Stderr, err)
 			os.Exit(1)
-        }
+		}
 
 	} else {
 
