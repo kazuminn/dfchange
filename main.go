@@ -21,11 +21,11 @@ var prevMap = map[string]string{}
 var root = "/"
 
 func scan(path string, info os.FileInfo, err error) error {
-		if path == "/swapfile"{
-			return nil 
-		}
+	if path == "/swapfile" {
+		return nil
+	}
 	if info.IsDir() {
-		if path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run"{
+		if path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run" {
 			return filepath.SkipDir
 		}
 	}
@@ -47,11 +47,11 @@ func scan(path string, info os.FileInfo, err error) error {
 }
 
 func detect(path string, info os.FileInfo, err error) error {
-		if path == "/swapfile"{
-			return nil 
-		}
+	if path == "/swapfile" {
+		return nil
+	}
 	if info.IsDir() {
-		if path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run"{
+		if path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run" {
 			return filepath.SkipDir
 		}
 	}
