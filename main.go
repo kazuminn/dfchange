@@ -18,13 +18,22 @@ type config struct {
 var currentConfig []config
 var configs = []config{}
 var prevMap = map[string]string{}
-var root = "/etc"
+var root = "/"
 
 func scan(path string, info os.FileInfo, err error) error {
+		if path == "/swapfile"{
+			return nil 
+		}
+	if info.IsDir() {
+		if path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run"{
+			return filepath.SkipDir
+		}
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(path)
 
 	// 一気に全部読み取り
 	b, err := ioutil.ReadAll(f)
@@ -38,10 +47,15 @@ func scan(path string, info os.FileInfo, err error) error {
 }
 
 func detect(path string, info os.FileInfo, err error) error {
-	f, err := os.Open(path)
-	if err != nil {
-		fmt.Println(err)
+		if path == "/swapfile"{
+			return nil 
+		}
+	if info.IsDir() {
+		if path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run"{
+			return filepath.SkipDir
+		}
 	}
+	f, _ := os.Open(path)
 
 	// 一気に全部読み取り
 	b, err := ioutil.ReadAll(f)
@@ -87,13 +101,13 @@ func main() {
 			prevMap[r.Path] = string(r.Hash)
 		}
 
-		//current
+		//detect
 		err = filepath.Walk(root, detect)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		//write
+		//file write
 		s, _ := json.Marshal(currentConfig)
 		err = ioutil.WriteFile("./result.json", s, 0666)
 		if err != nil {
