@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
+	"strconv"
 
 	"github.com/kazuminn/dfchange/hash"
 )
@@ -13,6 +15,9 @@ import (
 type config struct {
 	Path string `json:"path"`
 	Hash []byte `json:"hash"`
+	Permission string `json:"permission"`
+	Uid string `json:"uid"`
+	Gid string `json:"gid"`
 }
 
 var currentConfig []config
@@ -29,18 +34,27 @@ func scan(path string, info os.FileInfo, err error) error {
 			return filepath.SkipDir
 		}
 	}
+
+	var uid string
+	var gid string
+	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
+		uid = strconv.Itoa(int(stat.Uid))
+		gid = strconv.Itoa(int(stat.Gid))
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(path)
 
+
 	// 一気に全部読み取り
 	b, err := ioutil.ReadAll(f)
 
 	sha1 := hash.Hash_sha1{}
 	bs := sha1.GetHash(string(b))
-	configs = append(configs, config{path, bs})
+	configs = append(configs, config{path, bs, info.Mode().String(), uid, gid})
 	f.Close()
 
 	return nil
@@ -57,20 +71,28 @@ func detect(path string, info os.FileInfo, err error) error {
 	}
 	f, _ := os.Open(path)
 
+
 	// 一気に全部読み取り
 	b, err := ioutil.ReadAll(f)
+
+	var uid string
+	var gid string
+	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
+		uid = strconv.Itoa(int(stat.Uid))
+		gid = strconv.Itoa(int(stat.Gid))
+	}
 
 	sha1 := hash.Hash_sha1{}
 	bs := sha1.GetHash(string(b))
 	value, ok := prevMap[path]
 	if ok {
 		if value != string(bs) {
-			fmt.Println(path)
+			fmt.Println("changed file :%s", path)
 		}
 	} else {
-		fmt.Println(path)
+		fmt.Println("changed file :%s", path)
 	}
-	currentConfig = append(currentConfig, config{path, bs})
+	configs = append(configs, config{path, bs, info.Mode().String(), uid, gid})
 	f.Close()
 
 	return nil
