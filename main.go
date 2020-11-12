@@ -61,7 +61,7 @@ func scan(path string, info os.FileInfo, err error) error {
 }
 
 func detect(path string, info os.FileInfo, err error) error {
-	if path == "/swapfile" {
+	if path == "/swapfile" || path == "/sys/power/wakeup_count" {
 		return nil
 	}
 	if info.IsDir() {
@@ -89,7 +89,7 @@ func detect(path string, info os.FileInfo, err error) error {
 		if value != string(bs) {
 			fmt.Println("changed file :%s", path)
 		}
-	} else {
+	} else { //detect new file
 		fmt.Println("changed file :%s", path)
 	}
 	configs = append(configs, config{path, bs, info.Mode().String(), uid, gid})
