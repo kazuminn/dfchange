@@ -65,7 +65,7 @@ func detect(path string, info os.FileInfo, err error) error {
 		return nil
 	}
 	if info.IsDir() {
-		if path == "/sys/fs" || path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run" {
+		if path == "/sys/devices" || path == "/sys/fs" || path == "/var/log" || path == "/sys/kernel" || path == "/snap" || path == "/dev" || path == "~/components" || path == "/proc" || path == "/run" {
 			return filepath.SkipDir
 		}
 	}
